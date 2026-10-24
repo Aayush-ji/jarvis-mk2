@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Additional manifest entries merged by buildozer into the final APK -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.stark.enterprise.jarvis">
+
+    <!-- Keep-alive for background relay -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+
+    <!-- Storage for encrypted file chunks -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+
+    <!-- Biometric unlock before decryption -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+    <uses-permission android:name="android.permission.BIOMETRIC"/>
+
+    <!-- Notifications for transfer status -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Optional phone capabilities -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="JARVIS Mk.II"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:usesCleartextTraffic="false">
+
+        <!-- App shortcuts -->
+        <meta-data android:name="android.app.shortcuts"
+            android:resource="@xml/shortcuts"/>
+
+        <!-- Foreground service declaration -->
+        <service
+            android:name="org.kandroid.service.ServiceJarvis"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync|mediaProjection"/>
+
+        <receiver android:name="org.kandroid.service.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

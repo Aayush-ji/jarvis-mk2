@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S. Mk.II — Enterprise Command Console</title>
+<style>
+  /* =============================================================================
+     J.A.R.V.I.S. Mk.II — Enterprise Design System
+     ============================================================================= */
+  :root {
+    --jarvis-blue: #00d4ff;
+    --jarvis-cyan: #00f2ff;
+    --jarvis-dark: #050a14;
+    --jarvis-panel: #0f172a;
+    --panel-border: #1e293b;
+    --jarvis-text: #f8fafc;
+    --jarvis-muted: #94a3b8;
+    --jarvis-success: #00ff88;
+    --jarvis-warning: #ffb800;
+    --jarvis-danger: #ff4d4d;
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--jarvis-blue) var(--jarvis-dark);
+  }
+
+  body {
+    font-family: 'Segoe UI', 'Roboto', 'Inter', -apple-system, sans-serif;
+    background: var(--jarvis-dark);
+    color: var(--jarvis-text);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* =============================================================================
+     Background Grid & Glow
+     ============================================================================= */
+  .bg-grid {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  .bg-glow {
+    position: fixed;
+    top: -10%; left: -10%;
+    width: 60vw; height: 60vw;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+    animation: pulse-glow 8s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+  }
+
+  /* =============================================================================
+     Layout Shell
+     ============================================================================= */
+  .app-shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    background: rgba(5, 10, 20, 0.9);
+    border-right: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .brand {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .brand::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--jarvis-blue), transparent);
+  }
+
+  .brand .core {
+    width: 10px; height: 10px;
+    background: var(--jarvis-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--jarvis-blue);
+    animation: core-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes core-pulse {
+    0%, 100% { box-shadow: 0 0 12px var(--jarvis-blue); transform: scale(1); }
+    50% { box-shadow: 0 0 24px var(--jarvis-blue); transform: scale(1.15); }
+  }
+
+  .brand h2 {
+    font-size: 17px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--jarvis-blue);
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--jarvis-blue), var(--jarvis-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    color: var(--jarvis-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .nav {
+    list-style: none;
+    padding: 24px 20px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .nav li { margin-bottom: 6px; }
+
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    color: var(--jarvis-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+  }
+
+  .nav a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--jarvis-text);
+  }
+
+  .nav a.active {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--jarvis-blue);
+    border-left: 3px solid var(--jarvis-blue);
+    box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.1);
+  }
+
+  .nav .icon {
+    font-size: 16px;
+    width: 22px;
+    text-align: center;
+  }
+
+  .user-badge {
+    padding: 24px 28px;
+    border-top: 1px solid var(--panel-border);
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .user-badge .role {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--jarvis-text);
+    margin-bottom: 4px;
+  }
+
+  .user-badge .sub {
+    font-size: 11px;
+    color: var(--jarvis-muted);
+  }
+
+  /* Main Content */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.8) 0%, var(--jarvis-dark) 100%);
+  }
+
+  h1 {
+    font-size: 34px;
+    margin-bottom: 8px;
+    color: var(--jarvis-blue);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    color: var(--jarvis-muted);
+    margin-bottom: 40px;
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  /* Stats Row */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card:hover {
+    border-color: rgba(0, 212, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .stat-card .icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--jarvis-blue);
+  }
+
+  .stat-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--jarvis-text);
+    line-height: 1.1;
+  }
+
+  .stat-card .label {
+    font-size: 11px;
+    color: var(--jarvis-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .stat-card .trend {
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: auto;
+    color: var(--jarvis-success);
+  }
+
+  /* Cards Section */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(16px);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover {
+    border-color: rgba(0, 212, 255, 0.2);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--jarvis-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h3 .icon {
+    color: var(--jarvis-blue);
+  }
+
+  .refresh-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--jarvis-blue);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+  }
+
+  .refresh-btn:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--jarvis-blue);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  th {
+    color: var(--jarvis-blue);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .mono {
+    font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    color: var(--jarvis-muted);
+    word-break: break-all;
+  }
+
+  /* Status Badges */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-online {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--jarvis-success);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+  }
+
+  .badge-offline {
+    background: rgba(255, 77, 77, 0.15);
+    color: var(--jarvis-danger);
+    border: 1px solid rgba(255, 77, 77, 0.3);
+  }
+
+  .badge-degraded {
+    background: rgba(255, 184, 0, 0.15);
+    color: var(--jarvis-warning);
+    border: 1px solid rgba(255, 184, 0, 0.3);
+  }
+
+  .badge-active {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--jarvis-blue);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+  }
+
+  .badge-complete {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--jarvis-success);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+  }
+
+  /* Progress Bar */
+  .progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--jarvis-blue), var(--jarvis-cyan));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-text {
+    font-size: 11px;
+    color: var(--jarvis-muted);
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Section Titles */
+  .section-title {
+    font-size: 18px;
+    margin: 36px 0 16px;
+    color: var(--jarvis-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .divider {
+    flex: 1;
+    height: 1px;
+    background: var(--panel-border);
+  }
+
+  /* Quick Actions */
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--jarvis-text);
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  .btn:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--jarvis-blue);
+    color: var(--jarvis-blue);
+    transform: translateY(-1px);
+  }
+
+  .btn .btn-icon {
+    font-size: 18px;
+    color: var(--jarvis-blue);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--jarvis-blue), var(--jarvis-cyan));
+    color: #000;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary .btn-icon {
+    color: #000;
+  }
+
+  /* Scrollbar */
+  .main::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .main::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .main::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  .main::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.3);
+  }
+
+  /* Alerts */
+  .alert {
+    background: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+    color: #ffcccc;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .alert .icon {
+    color: var(--jarvis-danger);
+    font-weight: 700;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .sidebar { width: 220px; }
+    .main { padding: 20px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .app-shell { flex-direction: column; }
+    .sidebar { height: auto; width: 100%; border-right: none; border-bottom: 1px solid var(--panel-border); }
+    .main { height: auto; min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="core"></div>
+        <div>
+          <h2>JARVIS Mk.II</h2>
+          <div class="brand-sub">Enterprise Command Console</div>
+        </div>
+      </div>
+      <ul class="nav">
+        <li><a href="#" class="active" onclick="showView('overview', event)"><span class="icon">🖥️</span>Overview</a></li>
+        <li><a href="#" onclick="showView('devices', event)"><span class="icon">📱</span>Devices</a></li>
+        <li><a href="#" onclick="showView('transfers', event)"><span class="icon">📦</span>Transfers</a></li>
+        <li><a href="#" onclick="showView('audit', event)"><span class="icon">📋</span>Audit Log</a></li>
+        <li><a href="#" onclick="showView('groups', event)"><span class="icon">👥</span>Groups</a></li>
+      </ul>
+      <div class="user-badge">
+        <div class="role">Stark Enterprises</div>
+        <div class="sub">Secure Relay &bull; v2.0.0 &bull; Encrypted</div>
+      </div>
+    </aside>
+    <main class="main">
+
+      <!-- Overview -->
+      <div id="overview" class="card" style="display:block;">
+        <h1>Command Console</h1>
+        <div class="subtitle">Real-time orchestration for your device fleet</div>
+
+        <div class="actions-grid">
+          <button class="btn btn-primary" onclick="promptEnroll()">
+            <span class="btn-icon">➕</span>Enroll New Device
+          </button>
+          <button class="btn" onclick="promptFileSend()">
+            <span class="btn-icon">📦</span>Send File Securely
+          </button>
+          <button class="btn" onclick="loadDashboard()">
+            <span class="btn-icon">↻</span>Refresh All Data
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="icon">🖥️</div>
+            <div>
+              <div class="value" id="stat-devices">-</div>
+              <div class="label">Registered Devices</div>
+            </div>
+            <div class="trend" id="stat-devices-trend">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon">🟢</div>
+            <div>
+              <div class="value" id="stat-online">-</div>
+              <div class="label">Online Now</div>
+            </div>
+            <div class="trend" id="stat-online-trend" style="color:var(--jarvis-success)">operational</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon">📦</div>
+            <div>
+              <div class="value" id="stat-transfers">-</div>
+              <div class="label">Active Transfers</div>
+            </div>
+            <div class="trend" id="stat-transfers-trend">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon">🔒</div>
+            <div>
+              <div class="value">AES-256</div>
+              <div class="label">Encryption</div>
+            </div>
+            <div class="trend" style="color:var(--jarvis-success)">E2EE</div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>Device Fleet</span>
+          <div class="divider"></div>
+        </div>
+        <table id="overview-devices-table">
+          <thead>
+            <tr><th>Device ID</th><th>Name</th><th>Platform</th><th>Status</th><th>Last Seen</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Devices -->
+      <div id="devices" class="card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">📱</span>Device Fleet</h3>
+          <button class="refresh-btn" onclick="loadDevices(event)">↻ Refresh</button>
+        </div>
+        <table id="devices-table">
+          <thead>
+            <tr><th>Device ID</th><th>Name</th><th>Platform</th><th>Group</th><th>Status</th><th>Last Seen</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Transfers -->
+      <div id="transfers" class="card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">📦</span>Transfer History</h3>
+          <button class="refresh-btn" onclick="loadTransfers(event)">↻ Refresh</button>
+        </div>
+        <table id="transfers-table">
+          <thead>
+            <tr><th>File</th><th>Sender</th><th>Receiver</th><th>Status</th><th>Progress</th><th>Size</th><th>Started</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Audit -->
+      <div id="audit" class="card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">📋</span>Audit Trail</h3>
+          <button class="refresh-btn" onclick="loadAudit(event)">↻ Refresh</button>
+        </div>
+        <table id="audit-table">
+          <thead>
+            <tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Groups -->
+      <div id="groups" class="card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">👥</span>Device Groups</h3>
+          <button class="refresh-btn" onclick="loadGroups(event)">↻ Refresh</button>
+        </div>
+        <table id="groups-table">
+          <thead>
+            <tr><th>Group ID</th><th>Name</th><th>Devices</th><th>Created</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const API = '';
+    let token = localStorage.getItem('jarvis_token') || '';
+
+    async function api(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json', ...opts.headers };
+      if (token) headers.Authorization = 'Bearer ' + token;
+      const res = await fetch(API + path, { ...opts, headers });
+      if (res.status === 401) {
+        localStorage.removeItem('jarvis_token');
+        token = '';
+        location.reload();
+      }
+      return res.json();
+    }
+
+    function showView(id, e) {
+      if (e) e.preventDefault();
+      document.querySelectorAll('.main > .card').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+      document.getElementById(id).style.display = 'block';
+      if (e) e.currentTarget.classList.add('active');
+    }
+
+    async function loadDashboard(e) {
+      if (e) e.preventDefault();
+      showView('overview', e);
+      try {
+        const d = await api('/devices');
+        const online = d.devices.filter(x => x.status === 'online').length;
+        document.getElementById('stat-devices').textContent = d.devices.length;
+        document.getElementById('stat-online').textContent = online;
+        document.getElementById('stat-devices-trend').textContent = online + ' online';
+        const t = await api('/transfers');
+        document.getElementById('stat-transfers').textContent = t.transfers.filter(x => x.status === 'active').length;
+        document.getElementById('stat-transfers-trend').textContent = t.transfers.length + ' total';
+
+        // Overview device table (top 5)
+        const tb = document.querySelector('#overview-devices-table tbody');
+        tb.innerHTML = '';
+        const top = d.devices.slice(0, 5);
+        for (const x of top) {
+          const cls = x.status === 'online' ? 'badge-online' : (x.status === 'degraded' ? 'badge-degraded' : 'badge-offline');
+          tb.innerHTML += `<tr>
+            <td class="mono">${x.device_id}</td>
+            <td>${x.name}</td>
+            <td>${x.platform}</td>
+            <td><span class="badge ${cls}">${x.status}</span></td>
+            <td class="mono">${x.last_seen || 'never'}</td>
+          </tr>`;
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function loadDevices(e) {
+      if (e) e.preventDefault();
+      showView('devices', e);
+      const d = await api('/devices');
+      const tb = document.querySelector('#devices-table tbody');
+      tb.innerHTML = '';
+      for (const x of d.devices) {
+        const cls = x.status === 'online' ? 'badge-online' : (x.status === 'degraded' ? 'badge-degraded' : 'badge-offline');
+        tb.innerHTML += `<tr>
+          <td class="mono">${x.device_id}</td>
+          <td>${x.name}</td>
+          <td>${x.platform}</td>
+          <td>${x.group_id}</td>
+          <td><span class="badge ${cls}">${x.status}</span></td>
+          <td class="mono">${x.last_seen || 'never'}</td>
+        </tr>`;
+      }
+    }
+
+    async function loadTransfers(e) {
+      if (e) e.preventDefault();
+      showView('transfers', e);
+      const d = await api('/transfers');
+      const tb = document.querySelector('#transfers-table tbody');
+      tb.innerHTML = '';
+      for (const x of d.transfers) {
+        const cls = x.status === 'active' ? 'badge-active' : (x.status === 'complete' ? 'badge-complete' : 'badge-offline');
+        const pct = x.total_chunks ? Math.round((x.received_chunks || 0) / x.total_chunks * 100) : 0;
+        tb.innerHTML += `<tr>
+          <td>${x.filename}</td>
+          <td class="mono">${x.sender}</td>
+          <td class="mono">${x.receiver}</td>
+          <td><span class="badge ${cls}">${x.status}</span></td>
+          <td>
+            <div class="progress-container">
+              <div class="progress-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="progress-text">
+              <span>${pct}%</span>
+              <span>${x.received_chunks || 0}/${x.total_chunks}</span>
+            </div>
+          </td>
+          <td class="mono">${x.total_size || 0} bytes</td>
+          <td class="mono">${x.started_at || '-'}</td>
+        </tr>`;
+      }
+    }
+
+    async function loadAudit(e) {
+      if (e) e.preventDefault();
+      showView('audit', e);
+      const d = await api('/audit?limit=50');
+      const tb = document.querySelector('#audit-table tbody');
+      tb.innerHTML = '';
+      for (const x of d.audit) {
+        tb.innerHTML += `<tr>
+          <td class="mono">${x.ts}</td>
+          <td>${x.actor}</td>
+          <td>${x.action}</td>
+          <td class="mono">${x.target}</td>
+          <td class="mono">${x.details}</td>
+        </tr>`;
+      }
+    }
+
+    async function loadGroups(e) {
+      if (e) e.preventDefault();
+      showView('groups', e);
+      const d = await api('/groups');
+      const tb = document.querySelector('#groups-table tbody');
+      tb.innerHTML = '';
+      for (const x of d.groups) {
+        tb.innerHTML += `<tr><td>${x.group_id}</td><td>${x.name}</td><td>-</td><td class="mono">${x.created_at}</td></tr>`;
+      }
+    }
+
+    function promptEnroll() {
+      const id = prompt('Device ID (e.g., laptop-01):');
+      if (!id) return;
+      const name = prompt('Display name:') || id;
+      const platform = prompt('Platform (windows/linux/android/macos):') || 'unknown';
+      api('/auth/enroll', {
+        method: 'POST',
+        body: JSON.stringify({ device_id: id, name, platform })
+      }).then(r => {
+        if (r.token) {
+          alert('Token generated:\n' + r.token + '\n\nSave this securely. It will not be shown again.');
+        } else {
+          alert('Enrollment failed: ' + JSON.stringify(r));
+        }
+      }).catch(err => alert('Error: ' + err));
+    }
+
+    function promptFileSend() {
+      alert('Use the desktop client or API to send files securely.\nPOST /api/send with encrypted payload.');
+    }
+
+    // Load once on startup; manual refresh buttons available on each card
+    loadDashboard();
+  </script>
+</body>
+</html>

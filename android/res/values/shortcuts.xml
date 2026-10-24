@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="quick_send"
+        android:shortcutLongLabel="Send File Securely"
+        android:shortcutShortLabel="Send File">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.stark.enterprise.jarvis"
+            android:targetClass="com.stark.enterprise.jarvis.JarvisActivity"/>
+        <categories android:name="android.shortcut.conversation"/>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="system_status"
+        android:shortcutLongLabel="System Status"
+        android:shortcutShortLabel="Status">
+        <intent
+            android:action="com.stark.enterprise.jarvis.SYSTEM_STATUS"
+            android:targetPackage="com.stark.enterprise.jarvis"
+            android:targetClass="com.stark.enterprise.jarvis.JarvisActivity"/>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="remote_shell"
+        android:shortcutLongLabel="Remote Shell"
+        android:shortcutShortLabel="Shell">
+        <intent
+            android:action="com.stark.enterprise.jarvis.REMOTE_SHELL"
+            android:targetPackage="com.stark.enterprise.jarvis"
+            android:targetClass="com.stark.enterprise.jarvis.JarvisActivity"/>
+    </shortcut>
+</shortcuts>
