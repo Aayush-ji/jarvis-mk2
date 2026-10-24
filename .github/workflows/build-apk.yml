@@ -1,24 +1,32 @@
 name: Build JARVIS Mk.II APK
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: stable
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Upload artifacts
+      - name: Build with buildozer
+        run: |
+          sudo pip3 install buildozer==1.4.0
+          sudo pip3 install Cython==0.29.19
+          buildozer android debug
+        timeout-minutes: 120
+
+      - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          name: jarvis-apk
+          path: bin/*.apk
