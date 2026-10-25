@@ -15,13 +15,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential
 
-      - name: Build with buildozer
+      - name: Install buildozer
         run: |
-          sudo pip3 install buildozer==1.4.0
-          sudo pip3 install Cython==0.29.19
+          pip3 install --upgrade pip==20.3.4
+          pip3 install Cython==0.29.19
+          pip3 install buildozer==1.4.0
+          buildozer --version
+
+      - name: Build APK
+        run: |
           buildozer android debug
         timeout-minutes: 120
 
