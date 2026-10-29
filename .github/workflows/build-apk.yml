@@ -5,21 +5,53 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Build with buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          workdir: .
-          buildozer_version: stable
-          command: buildozer android debug
+          python-version: '3.8'
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            zip \
+            unzip \
+            openjdk-8-jdk \
+            python3-pip \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev
+
+      - name: Install buildozer and dependencies
+        run: |
+          pip install --upgrade pip==20.3.4
+          pip install Cython==0.29.19
+          pip install virtualenv
+          pip install buildozer==1.2.0
+
+      - name: Build APK
+        run: |
+          buildozer android debug
+        timeout-minutes: 180
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
         with:
-          name: jarvis-apk
+          name: jarvis-mk2-apk
           path: bin/*.apk
+          if-no-files-found: error
